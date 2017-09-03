@@ -1,0 +1,27 @@
+{
+  "name": "Ferrisbane/Laraformer",
+  "description": "A Laravel package that makes 'terraforming' forms easy.",
+  "keywords": [
+    "form",
+    "laravel"
+  ],
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Ferrisbane",
+      "email": "ferrisbanegit@ferrisbane.co.uk"
+    }
+  ],
+  "require": {
+    "php": ">=5.4.0"
+  },
+  "autoload": {
+    "psr-4": {
+      "Ferrisbane\\Laraformer\\": "src/"
+    },
+    "files": [
+      "src/helpers.php"
+    ]
+  },
+  "minimum-stability": "stable"
+}
