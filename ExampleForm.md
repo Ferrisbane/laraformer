@@ -1,13 +1,47 @@
+```php
 <?php
 
-namespace App\Form;
+namespace App\Forms;
 
 use Ferrisbane\Laraformer\Laraformer;
 
 class ContactForm extends Laraformer {
 
+    protected $failedRedirectRoute = 'home.index';
+    protected $successRedirectRoute = 'home.success';
+
+    public function formUrl()
+    {
+        return route('home.post');
+    }
+
+    public function rules()
+    {
+        return [
+            "first_name" => "required",
+            "last_name" => "required",
+            "email" => "confirmed|required",
+            "email_confirmation" => "required",
+            "phone_number" => "required",
+            "query" => "required",
+        ];
+    }
+
     /**
-     * Make the form.
+     * Get the error messages for the defined validation rules.
+     *
+     * @return array
+     */
+    public function messages()
+    {
+        return [
+            'first_name.required' => 'The first name field is required',
+            'last_name.required' => 'The last name field is required',
+        ];
+    }
+
+    /**
+     * Create the form.
      *
      * @return void
      */
@@ -52,4 +86,11 @@ class ContactForm extends Laraformer {
              ->label('Click here to contact us');
     }
 
+    public function passedValidation($validator)
+    {
+        dd('Validation passed, save to db, send to service');
+    }
+
 }
+
+```

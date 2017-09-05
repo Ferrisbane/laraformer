@@ -4,9 +4,12 @@ namespace Ferrisbane\Laraformer;
 
 use Ferrisbane\Laraformer\Contracts\Laraformer as LaraformerC;
 use Illuminate\Support\Fluent;
-use Illuminate\Support\Facades\Validator;
+// use Illuminate\Support\Facades\Validator;
+use Illuminate\Contracts\Validation\Validator;
+use Illuminate\Validation\ValidationException;
+use Illuminate\Foundation\Http\FormRequest;
 
-class Laraformer implements LaraformerC
+class Laraformer extends FormRequest implements LaraformerC
 {
 
     /**
@@ -15,6 +18,12 @@ class Laraformer implements LaraformerC
      * @var string
      */
     protected $view = 'laraformer::forms.bootstrap';
+
+    protected $formUrl = false;
+    protected $formMethod = 'POST';
+
+    protected $validate = false;
+    protected $validationFailed = false;
 
     /**
      * The commands that should be run for the table.
@@ -107,8 +116,20 @@ class Laraformer implements LaraformerC
         }
 
         return view($this->view, [
-            'form' => $this->fields
+            'formUrl' => $this->formUrl(),
+            'formMethod' => $this->formMethod(),
+            'fields' => $this->fields
         ]);
+    }
+
+    public function formUrl()
+    {
+        return $this->formUrl;
+    }
+
+    public function formMethod()
+    {
+        return $this->formMethod;
     }
 
     public function make($form)
@@ -118,36 +139,83 @@ class Laraformer implements LaraformerC
 
     public function save($input)
     {
-        $validator = $this->validate($input);
-
-        if ($validator->fails()) {
-            return $this->fails($validator, $input);
-        }
-
-        return $this->success($input);
+        $this->validate = true;
+        return $this->validate();
     }
 
-    public function validate($input)
+    /**
+     * Get the validation rules that apply to the request.
+     *
+     * @return array
+     */
+    public function rules()
     {
         $this->make($this);
 
-        $this->getValidationRules();
-
-        $validator = Validator::make($input, $this->rules);
-
-        return $validator;
+        return $this->getValidationRules();
     }
 
-    public function fails($validator)
+
+    /**
+     * Validate the class instance.
+     *
+     * @return void
+     */
+    public function validate()
     {
-        return back()->withInput()
-                     ->withErrors($validator);
+        if ($this->validate) {
+            $this->prepareForValidation();
+
+            $instance = $this->getValidatorInstance();
+
+            if ( ! $this->passesAuthorization()) {
+                $this->validationFailed = true;
+                return $this->failedAuthorization();
+            } elseif ( ! $instance->passes()) {
+                $this->validationFailed = true;
+                return $this->failedValidation($instance);
+            } elseif ($instance->passes()) {
+                $this->validationFailed = false;
+                return $this->passedValidation($instance);
+            }
+        }
     }
 
-    public function success()
+    /**
+     * Handle a successful validation attempt.
+     *
+     * @param  \Illuminate\Contracts\Validation\Validator  $validator
+     * @return void
+     *
+     * @throws \Illuminate\Validation\ValidationException
+     */
+    protected function passedValidation($validator)
     {
-        return null;
+        return redirect($this->getRedirectUrl())->with('success', true);
     }
+
+    /**
+     * Get the URL to redirect to on a validation error.
+     *
+     * @return string
+     */
+    protected function getRedirectUrl()
+    {
+        $url = $this->redirector->getUrlGenerator();
+
+        $prefix = $this->validationFailed ? 'failed' : 'success';
+
+        if ($this->{$prefix.'Redirect'}) {
+            return $url->to($this->{$prefix.'Redirect'});
+        } elseif ($this->{$prefix.'RedirectRoute'}) {
+            return $url->route($this->{$prefix.'RedirectRoute'});
+        } elseif ($this->{$prefix.'RedirectAction'}) {
+            return $url->action($this->{$prefix.'RedirectAction'});
+        }
+
+        return $url->previous();
+    }
+
 
     protected function getValidationRules()
     {
@@ -179,20 +247,15 @@ class Laraformer implements LaraformerC
         return $this->rules;
     }
 
-
-
     /**
-     * Determine if the blueprint has a create command.
+     * Determine if the user is authorized to make this request.
      *
      * @return bool
      */
-    protected function creating()
+    public function authorize()
     {
-        return collect($this->commands)->contains(function ($command) {
-            return $command->name == 'create';
-        });
+        return true;
     }
-
 
     /**
      * Add a new field to the form.
@@ -406,10 +469,10 @@ class Laraformer implements LaraformerC
      * @param  string  $column
      * @return \Illuminate\Support\Fluent
      */
-    public function url($column)
-    {
-        return $this->addField('url', $column);
-    }
+    // public function url($column)
+    // {
+    //     return $this->addField('url', $column);
+    // }
 
     /**
      * Create a new week column on the table.
@@ -443,8 +506,6 @@ class Laraformer implements LaraformerC
     {
         return $this->addField('textarea', $column);
     }
-
-
 
 
 }

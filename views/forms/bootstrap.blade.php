@@ -1,8 +1,8 @@
-<form method="POST" action="{{ route('home.post') }}" accept-charset="UTF-8">
+<form method="{{ $formMethod }}" action="{{ $formUrl }}" accept-charset="UTF-8">
 
     <input name="_token" type="hidden" value="{{ csrf_token() }}" id="_token">
 
-    @foreach($form as $key => $field)
+    @foreach($fields as $key => $field)
         <div class="clearfix"></div>
 
         @if($field->type == 'submit' || $field->type == 'reset')
@@ -28,13 +28,13 @@
                             @if(is_array($value))
                                 <optgroup label="{{ $key }}">
                                     @foreach($value as $subKey => $subValue)
-                                        <option value="{{ $subKey }}" @if($field->value == $subValue) selected="selected" @endif >
+                                        <option value="{{ $subKey }}" @if($field->value == $subKey) selected="selected" @endif >
                                             {{ $subValue }}
                                         </option>
                                     @endforeach
                                 </optgroup>
                             @else
-                                <option value="{{ $key }}" @if($field->value == $value) selected="selected" @endif >
+                                <option value="{{ $key }}" @if($field->value == $key) selected="selected" @endif >
                                     {{ $value }}
                                 </option>
                             @endif
