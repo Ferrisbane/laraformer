@@ -21,6 +21,7 @@ class Laraformer extends FormRequest implements LaraformerC
 
     protected $formUrl = false;
     protected $formMethod = 'POST';
+    protected $formClass = '';
 
     protected $validate = false;
     protected $validationFailed = false;
@@ -102,7 +103,6 @@ class Laraformer extends FormRequest implements LaraformerC
      */
     protected $rules = [];
 
-
     public function __construct()
     {
     }
@@ -115,9 +115,14 @@ class Laraformer extends FormRequest implements LaraformerC
             $this->view = $view;
         }
 
+        $form = new Fluent([
+            'url' => $this->formUrl(),
+            'method' => $this->formMethod(),
+            'class' => $this->formClass()
+        ]);
+
         return view($this->view, [
-            'formUrl' => $this->formUrl(),
-            'formMethod' => $this->formMethod(),
+            'form' => $form,
             'fields' => $this->fields
         ]);
     }
@@ -130,6 +135,11 @@ class Laraformer extends FormRequest implements LaraformerC
     public function formMethod()
     {
         return $this->formMethod;
+    }
+
+    public function formClass()
+    {
+        return $this->formClass;
     }
 
     public function make($form)
